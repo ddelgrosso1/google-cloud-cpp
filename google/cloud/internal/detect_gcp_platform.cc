@@ -26,6 +26,7 @@ namespace google {
 namespace cloud {
 GOOGLE_CLOUD_CPP_INLINE_NAMESPACE_BEGIN
 namespace internal {
+
 bool HasGceBiosInfo(std::string const& path) {
 #ifdef _WIN32
   return false;
@@ -83,6 +84,7 @@ bool HasGceMacAddress(std::string const& dir) {
 #endif  // __unix__
   return false;
 }
+
 }  // namespace internal
 GOOGLE_CLOUD_CPP_INLINE_NAMESPACE_END
 }  // namespace cloud
