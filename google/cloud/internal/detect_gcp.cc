@@ -76,7 +76,7 @@ bool GoogleVirtualMachineDetector::IsGoogleCloudServerless(
 #ifdef _WIN32
   for (auto env_var : env_variables) {
     char* buf = nullptr;
-    DWORD size = 0;
+    size_t size = 0;
     auto result = _dupenv_s(&buf, &size, env_var.c_str());
     if (result == 0 && buf != nullptr) {
       free(buf);
