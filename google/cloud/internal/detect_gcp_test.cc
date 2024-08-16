@@ -47,7 +47,7 @@ void WriteTestRegistryValue(std::string value) {
                                   KEY_ALL_ACCESS, nullptr, &hKey, nullptr);
   if (result != ERROR_SUCCESS) return;
   result = ::RegSetValueExA(hKey, value_key.c_str(), 0, REG_SZ,
-                            (LPBYTE)value.c_str(), strlen(value.c_str()) + 1);
+                            (LPBYTE)value.c_str(), (DWORD)strlen(value.c_str()) + 1);
   if (result != ERROR_SUCCESS) return;
   ::RegCloseKey(hKey);
 }
