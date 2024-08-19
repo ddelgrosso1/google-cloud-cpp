@@ -66,6 +66,17 @@ TEST(DetectGcpPlatform, RegistryValueDoesNotExist) {
 
   EXPECT_TRUE("" == bios_value);
 }
+
+TEST_P(RunMultiValueTest, RegistryValuesExists) {
+  auto cur_param = GetParam();
+  WriteTestRegistryValue(std::string{cur_param});
+
+  auto platform_detector = ::google::cloud::internal::GoogleVirtualMachineDetector();
+  auto bios_value = platform_detector.GetBiosInformation(HKEY_CURRENT_USER, sub_key, value_key);
+  CleanupTestRegistryValue();
+
+  EXPECT_TRUE(cur_param == bios_value);
+}
 #else  // _WIN32
 std::string TempFileName() {
   static auto generator =
