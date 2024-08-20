@@ -34,23 +34,29 @@ namespace internal {
  */
 class GcpDetectorWin32 {
  public:
-  virtual bool IsGoogleCloudBios() = 0;
+  virtual bool IsGoogleCloudBios(HKEY key, std::string const& sub_key,
+                                 std::string const& value_key) = 0;
   virtual bool IsGoogleCloudServerless(
       std::vector<std::string> const& env_variables) = 0;
+
+ private:
   virtual std::string GetBiosInformation(HKEY key, std::string const& sub_key,
                                          std::string const& value_key) = 0;
 }
 
 class GcpDetectorWin32Impl : GcpDetectorWin32 {
  public:
-  bool IsGoogleCloudBios() override;
-  bool IsGoogleCloudServerless(std::vector<std::string> const& env_variables = {
-                                   "CLOUD_RUN_JOB", "FUNCTION_NAME",
-                                   "K_SERVICE"}) override;
-  std::string GetBiosInformation(
+  bool IsGoogleCloudBios(
       HKEY key = HKEY_LOCAL_MACHINE,
       std::string const& sub_key = "SYSTEM\\HardwareConfig\\Current",
       std::string const& value_key = "SystemProductName") override;
+  bool IsGoogleCloudServerless(std::vector<std::string> const& env_variables = {
+                                   "CLOUD_RUN_JOB", "FUNCTION_NAME",
+                                   "K_SERVICE"}) override;
+
+ private:
+  std::string GetBiosInformation(HKEY key, std::string const& sub_key,
+                                 std::string const& value_key) override;
 }
 
 }  // namespace internal

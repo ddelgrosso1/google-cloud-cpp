@@ -18,6 +18,8 @@
 #include "absl/strings/string_view.h"
 #include <gmock/gmock.h>
 #include <fstream>
+#include <vector>
+#include <stdlib.h>
 
 namespace google {
 namespace cloud {
@@ -25,11 +27,17 @@ GOOGLE_CLOUD_CPP_INLINE_NAMESPACE_BEGIN
 namespace internal {
 namespace {
 
-class RunMultiValueTest : public ::testing::TestWithParam<absl::string_view> {};
-INSTANTIATE_TEST_SUITE_P(DetectGcpPlatform, RunMultiValueTest,
+class MultiValidValuesTest
+    : public ::testing::TestWithParam<absl::string_view> {};
+class MultiInvalidValuesTest
+    : public ::testing::TestWithParam<absl::string_view> {};
+INSTANTIATE_TEST_SUITE_P(DetectGcpPlatform, MultiValidValuesTest,
                          testing::Values("Google", "Google Compute Engine",
                                          "  Google  ",
-                                         " Google  Compute Engine  "));
+                                         "  Google Compute Engine  "));
+INSTANTIATE_TEST_SUITE_P(DetectGcpPlatform, MultiInvalidValuesTest,
+                         testing::Values("Loogle", "Test", "Google K8S Engine",
+                                         "Compute Engine Google"));
 
 std::string TempFileName() {
   static auto generator =
@@ -40,25 +48,58 @@ std::string TempFileName() {
           generator, 16, "abcdefghijlkmnopqrstuvwxyz0123456789"));
 }
 
+std::vector<std::string> env_vars = {"TEST_VAR_ONE"};
+
 TEST(DetectGcpPlatform, FileDoesNotExist) {
   auto const file_name = TempFileName();
-  auto platform_detector = ::google::cloud::internal::GcpDetectorImpl();
-  auto bios_value = platform_detector.GetBiosInformation(file_name);
+  auto gcp_detector = ::google::cloud::internal::GcpDetectorImpl();
+  auto is_cloud_bios = gcp_detector.IsGoogleCloudBios(file_name);
 
-  EXPECT_TRUE("" == bios_value);
+  EXPECT_FALSE(is_cloud_bios);
 }
 
-TEST_P(RunMultiValueTest, FileExists) {
+TEST_P(MultiValidValuesTest, FileExistsContainsGcpValue) {
   auto const file_name = TempFileName();
   auto cur_param = GetParam();
 
   std::ofstream(file_name) << cur_param;
 
-  auto platform_detector = ::google::cloud::internal::GcpDetectorImpl();
-  auto bios_value = platform_detector.GetBiosInformation(file_name);
+  auto gcp_detector = ::google::cloud::internal::GcpDetectorImpl();
+  auto is_cloud_bios = gcp_detector.IsGoogleCloudBios(file_name);
   (void)std::remove(file_name.c_str());
 
-  EXPECT_TRUE(cur_param == bios_value);
+  EXPECT_TRUE(is_cloud_bios);
+}
+
+TEST_P(MultiInvalidValuesTest, FileExistsDoesNotContainGcpValue) {
+  auto const file_name = TempFileName();
+  auto cur_param = GetParam();
+
+  std::ofstream(file_name) << cur_param;
+
+  auto gcp_detector = ::google::cloud::internal::GcpDetectorImpl();
+  auto is_cloud_bios = gcp_detector.IsGoogleCloudBios(file_name);
+  (void)std::remove(file_name.c_str());
+
+  EXPECT_FALSE(is_cloud_bios);
+}
+
+TEST(DetectGcpPlatform, NoEnvVarSet) {
+  auto gcp_detector = ::google::cloud::internal::GcpDetectorImpl();
+  auto is_cloud_serverless = gcp_detector.IsGoogleCloudServerless(env_vars);
+
+  EXPECT_FALSE(is_cloud_serverless);
+}
+
+TEST(DetectGcpPlatform, EnvVarSet) {
+  setenv(env_vars[0].c_str(), "VALUE", false);
+
+  auto gcp_detector = ::google::cloud::internal::GcpDetectorImpl();
+  auto is_cloud_serverless = gcp_detector.IsGoogleCloudServerless(env_vars);
+
+  unsetenv(env_vars[0].c_str());
+
+  EXPECT_TRUE(is_cloud_serverless);
 }
 
 }  // namespace

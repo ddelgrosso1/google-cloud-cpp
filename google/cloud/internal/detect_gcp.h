@@ -34,21 +34,24 @@ namespace internal {
  */
 class GcpDetector {
  public:
-  virtual bool IsGoogleCloudBios() = 0;
+  virtual bool IsGoogleCloudBios(std::string const& path) = 0;
   virtual bool IsGoogleCloudServerless(
       std::vector<std::string> const& env_variables) = 0;
 
+ private:
   virtual std::string GetBiosInformation(std::string const& path) = 0;
 };
 
 class GcpDetectorImpl : GcpDetector {
  public:
-  bool IsGoogleCloudBios() override;
+  bool IsGoogleCloudBios(
+      std::string const& path = "/sys/class/dmi/id/product_name") override;
   bool IsGoogleCloudServerless(std::vector<std::string> const& env_variables = {
                                    "CLOUD_RUN_JOB", "FUNCTION_NAME",
                                    "K_SERVICE"}) override;
-  std::string GetBiosInformation(
-      std::string const& path = "/sys/class/dmi/id/product_name") override;
+
+ private:
+  std::string GetBiosInformation(std::string const& path) override;
 };
 
 }  // namespace internal

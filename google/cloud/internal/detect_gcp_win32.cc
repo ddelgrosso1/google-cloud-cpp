@@ -45,9 +45,11 @@ std::string GcpDetectorWin32Impl::GetBiosInformation(
   return contents;
 }
 
-bool GcpDetectorWin32Impl::IsGoogleCloudBios() {
-  auto bios_string_view =
-      absl::StripAsciiWhitespace(absl::string_view(this->GetBiosInformation()));
+bool GcpDetectorWin32Impl::IsGoogleCloudBios(HKEY key,
+                                             std::string const& sub_key,
+                                             std::string const& value_key) {
+  auto bios_information = this->GetBiosInformation(key, sub_key, value_key);
+  absl::StripAsciiWhitespace(&bios_information);
 
   return bios_string_view == "Google" ||
          bios_string_view == "Google Compute Engine";
@@ -58,6 +60,8 @@ bool GcpDetectorWin32Impl::IsGoogleCloudServerless(
   for (auto env_var : env_variables) {
     char* buf = nullptr;
     size_t size = 0;
+    // Use _dupenv_s here instead of getenv as MSVC throws a security error on
+    // getenv
     auto result = _dupenv_s(&buf, &size, env_var.c_str());
     if (result == 0 && buf != nullptr) {
       free(buf);

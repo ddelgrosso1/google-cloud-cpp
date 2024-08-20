@@ -43,12 +43,12 @@ std::string GcpDetectorImpl::GetBiosInformation(std::string const& path) {
   return contents;
 }
 
-bool GcpDetectorImpl::IsGoogleCloudBios() {
-  auto bios_string_view =
-      absl::StripAsciiWhitespace(absl::string_view(this->GetBiosInformation()));
+bool GcpDetectorImpl::IsGoogleCloudBios(std::string const& path) {
+  auto bios_information = this->GetBiosInformation(path);
+  absl::StripAsciiWhitespace(&bios_information);
 
-  return bios_string_view == "Google" ||
-         bios_string_view == "Google Compute Engine";
+  return bios_information == "Google" ||
+         bios_information == "Google Compute Engine";
 }
 
 bool GcpDetectorImpl::IsGoogleCloudServerless(
