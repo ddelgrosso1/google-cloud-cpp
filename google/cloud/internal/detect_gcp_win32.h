@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GOOGLE_CLOUD_CPP_GOOGLE_CLOUD_INTERNAL_DETECT_GCP_H
-#define GOOGLE_CLOUD_CPP_GOOGLE_CLOUD_INTERNAL_DETECT_GCP_H
+#ifndef GOOGLE_CLOUD_CPP_GOOGLE_CLOUD_INTERNAL_DETECT_GCP_WIN32_H
+#define GOOGLE_CLOUD_CPP_GOOGLE_CLOUD_INTERNAL_DETECT_GCP_WIN32_H
 
-#ifndef _WIN32
-#include "google/cloud/version.h"
+#ifdef _WIN32
 #include <string>
 #include <vector>
+#include <winreg.h>
 
 namespace google {
 namespace cloud {
@@ -32,29 +32,30 @@ namespace internal {
  * This code is split across WIN32 and other as the detection logic differs
  * slightly due to needing to make platform specific calls.
  */
-class GcpDetector {
+class GcpDetectorWin32 {
  public:
   virtual bool IsGoogleCloudBios() = 0;
   virtual bool IsGoogleCloudServerless(
       std::vector<std::string> const& env_variables) = 0;
+  virtual std::string GetBiosInformation(HKEY key, std::string const& sub_key,
+                                         std::string const& value_key) = 0;
+}
 
-  virtual std::string GetBiosInformation(std::string const& path) = 0;
-};
-
-class GcpDetectorImpl : GcpDetector {
+class GcpDetectorWin32Impl : GcpDetectorWin32 {
  public:
   bool IsGoogleCloudBios() override;
   bool IsGoogleCloudServerless(std::vector<std::string> const& env_variables = {
                                    "CLOUD_RUN_JOB", "FUNCTION_NAME",
                                    "K_SERVICE"}) override;
   std::string GetBiosInformation(
-      std::string const& path = "/sys/class/dmi/id/product_name") override;
-};
+      HKEY key = HKEY_LOCAL_MACHINE,
+      std::string const& sub_key = "SYSTEM\\HardwareConfig\\Current",
+      std::string const& value_key = "SystemProductName") override;
+}
 
 }  // namespace internal
-GOOGLE_CLOUD_CPP_INLINE_NAMESPACE_END
 }  // namespace cloud
 }  // namespace google
-#endif  // _WIN32
 
-#endif  // GOOGLE_CLOUD_CPP_GOOGLE_CLOUD_INTERNAL_DETECT_GCP_H
+#endif  // _WIN32
+#endif  // GOOGLE_CLOUD_CPP_GOOGLE_CLOUD_INTERNAL_DETECT_GCP_WIN32_H
